@@ -10,19 +10,23 @@ const Rescue = () => {
     const [fileChosen, setFileChosen] = useState(false); // New state variable
 
     useEffect(() => {
-        axios.get('/clinics')
-          .then(response => {
-            console.log("Data received:", response.data); // Add this line to log data
-            setData(response.data); 
-            console.log(response);
-          })
-          .catch(error => {
-            console.error('Error fetching data:', error);
-          });
+        // axios.get('/clinics')
+        //   .then(response => {
+        //     console.log("Data received:", response.data); // Add this line to log data
+        //     setData(response.data); 
+        //     console.log(response);
+        //   })
+        //   .catch(error => {
+        //     console.error('Error fetching data:', error);
+        //   });
     }, []);
 
     const [location, setLocation] = useState(null);
     const [errorMessage, setErrorMessage] = useState('');
+    const [mobile,setMobile]=useState('');
+    const [issue,setIssue]=useState('');
+    const[lat,setLat]=useState('');
+    const[lng,setLng]=useState('');
 
     // Function to handle file upload
     const handleFileUpload = (event) => {
@@ -52,7 +56,11 @@ const Rescue = () => {
         const longitude = position.coords.longitude;
         const accuracy = position.coords.accuracy;
         const message = `Latitude: ${latitude}, Longitude: ${longitude}, Accuracy: ${accuracy} meters`;
+        setLat(latitude);
+        setLng(longitude);
+        // postlocation(latitude,longitude);
         setLocation(message);
+
 
         // You can optionally send this data to your server for further processing
         // Here's an example of sending the data using fetch API
@@ -64,6 +72,36 @@ const Rescue = () => {
         //     body: JSON.stringify({ latitude, longitude }),
         // });
     };
+    async function postlocation(){
+        getLocation();
+        const data = {
+            mobile: mobile,
+            issue:issue,
+            location: {
+                type: "Point",
+                coordinates: [lng, lat]
+            }
+        };
+        try {
+            const response = await fetch('http://localhost:4000/registerHelp', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            });
+    
+            if (response.ok) {
+                alert('Rescue Registration  successful');
+            } else {
+                const errorData = await response.json();
+                alert(`Registration failed: ${errorData.message}`);
+            }
+        } catch (error) {
+            alert(`Error submitting form: ${error.message}`);
+        }
+        
+    }
 
     // Function to handle errors
     const displayError = (error) => {
@@ -109,14 +147,15 @@ const Rescue = () => {
             </div>
             <div className='submit'>
                 <input type="file" onChange={handleFileUpload} accept="image/*" />
-                <button onClick={getLocation}>Submit</button>
+                <button onClick={getLocation}>Confirm Location</button>
             </div>
             <div className='input'>
                 <h4>phone no:</h4>
-                <input type='text'></input>
+                <input type='text' onChange={(e)=>{setMobile(e.target.value)}}></input>
                 <h4>describe the issue:</h4>
-                <input type='textbox' style={{ height: 100 }}></input>
+                <input type='textbox' onChange={(e)=>{setIssue(e.target.value)}} style={{ height: 100 }}></input>
             </div>
+            <button onClick={postlocation}>Submit RescueForm</button>
             <div id="result">
                 {location ? (
                     <div>{location}</div>
